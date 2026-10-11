@@ -39,7 +39,11 @@ Vous utilisiez **Fleksy** et il n'est plus mis à jour depuis 2023 ? HeliFlick r
 | **Effacer** → glisser vers le haut | Retour à la ligne (ou Entrée dans une recherche / un formulaire) |
 | Glisser **horizontalement sur la barre du haut** | Pages : chiffres, raccourcis, copier/coller, disposition |
 
-**Appui long** sur une lettre : accents et symboles (é è ê, & _ …). Sans lever le doigt, glissez sur une autre lettre pour voir ses variantes. Appui long sur **b** : point et virgule.
+**Appui long** sur une lettre (½ s) : tout le clavier passe en **symboles** sous votre doigt ; glissez jusqu'au symbole voulu et relâchez. Gardez le doigt immobile ½ s de plus : les **lettres spéciales** de la lettre apparaissent (ç ć č, é è ê…).
+
+**Deuxième glissement à droite** après un mot : point puis espace.
+
+Une **ligne d'aperçu** au-dessus des lettres montre à gauche ce que donne un glissement vers le haut (📖 : ajout au dictionnaire), au centre le mot retenu, à droite la suggestion suivante.
 
 **Personnalisation** : couleur du clavier et de la rangée du milieu, taille de la barre d'outils, raccourcis texte (adresse e-mail, téléphone…), QWERTY / QWERTZ / AZERTY.
 

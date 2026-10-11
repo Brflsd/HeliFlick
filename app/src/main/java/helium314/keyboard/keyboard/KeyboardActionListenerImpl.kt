@@ -57,6 +57,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
                 KeyboardLayoutSet.onKeyboardThemeChanged() // vide le cache des dispositions
                 keyboardSwitcher.reloadKeyboard()
             },
+            updateShiftState = { keyboardSwitcher.updateShiftState(latinIME.currentAutoCapsState, latinIME.currentRecapitalizeState) },
             context = latinIME,
         )
     }

@@ -195,10 +195,6 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         }
 
         updateKeys()
-        FleksyCorrectionDisplay.onChange = {
-            val state = FleksyCorrectionDisplay.state
-            if (state != null) renderFleksyCorrection(state) else hideFleksyCorrection()
-        }
     }
 
     private lateinit var listener: Listener
@@ -275,6 +271,7 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
     }
 
     fun setSuggestions(suggestions: SuggestedWords, isRtlLanguage: Boolean) {
+        FleksyPreviewLine.showSuggestions(suggestions)
         // correction façon Fleksy en cours : on garde son affichage tant que l'utilisateur n'a pas retapé
         if (fleksyCorrectionVisible) FleksyCorrectionDisplay.state?.let {
             setRtl(isRtlLanguage)

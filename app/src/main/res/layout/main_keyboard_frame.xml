@@ -16,6 +16,14 @@
         android:id="@+id/strip_container"
         layout="@layout/strip_container" />
 
+    <!-- HeliFlick : ligne d'aperçu des mots (non cliquable) entre la barre d'outils et les lettres -->
+    <LinearLayout
+        android:id="@+id/fleksy_preview_line"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="22dp"
+        android:visibility="gone" />
+
     <!-- To ensure that key preview popup is correctly placed when the current system locale is
          one of RTL locales, layoutDirection="ltr" is needed in the SDK version 17+. -->
     <helium314.keyboard.latin.KeyboardWrapperView

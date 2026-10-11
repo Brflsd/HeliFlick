@@ -189,6 +189,12 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
     // true si ce doigt a commencé sur effacer : un glissement vers le haut fait un retour à la ligne
     private boolean mDeleteSwipeCandidate = false;
     private boolean mEmojiExitSwipeCandidate = false;
+    // Appui long en deux temps (façon Fleksy) : 1) clavier des symboles, 2) lettres spéciales si le doigt reste immobile
+    private int mFleksyLongPressStage = 0; // 0 : rien, 1 : symboles affichés
+    @Nullable private Key mFleksyLongPressKey; // lettre d'origine
+    private int mFleksyStageX;
+    private int mFleksyStageY;
+    private static final int sFleksyStillSlop = KtxKt.dpToPx(14, Resources.getSystem());
     // touche dont le panneau d'appui long est affiché (pour passer au panneau d'une autre lettre en glissant)
     @Nullable private Key mPopupSourceKey;
     private static final int sPopupSwitchMargin = KtxKt.dpToPx(4, Resources.getSystem());
@@ -679,6 +685,8 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         mDeleteSwipeCandidate = false;
         mEmojiExitSwipeCandidate = false;
         mPopupSourceKey = null;
+        mFleksyLongPressStage = 0;
+        mFleksyLongPressKey = null;
         // Naive up-to-down noise filter.
         final long deltaT = eventTime - mUpTime;
         if (deltaT < sParams.mTouchNoiseThresholdTime) {
@@ -804,6 +812,59 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         sListener.onFleksyNewlineOrEnter();
         sListener.onCustomRequest(KeyboardActionListener.CustomAction.PERFORM_HAPTIC);
         return true;
+    }
+
+    /** Appui long, 1er temps : affiche le clavier des symboles sous le doigt, qui peut glisser jusqu'au symbole voulu. */
+    private void startFleksySymbols(@NonNull final Key letter) {
+        mFleksyLongPressKey = letter;
+        mFleksyLongPressStage = 1;
+        setReleasedKeyGraphics(letter, false);
+        sListener.onReleaseKey(letter.getCode(), true);
+        sListener.onCustomRequest(KeyboardActionListener.CustomAction.PERFORM_HAPTIC);
+        mIsAllowedDraggingFinger = true;
+        mCurrentKey = null;
+        sListener.onCodeInput(KeyCode.SYMBOL, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false);
+        // le clavier a changé : la hauteur peut être différente, les coordonnées partent du haut de la vue
+        final int x = mLastX;
+        final int y = mLastY + keyboardChangeOccupiedHeightDifference;
+        keyboardChangeOccupiedHeightDifference = 0;
+        mFleksyStageX = x;
+        mFleksyStageY = y;
+        mStartX = x;
+        mStartY = y;
+        final Key symbol = onMoveKey(x, y);
+        if (symbol != null) processDraggingFingerInToNewKey(symbol, x, y, SystemClock.uptimeMillis());
+        // délai avant les lettres spéciales (même délai que l'appui long)
+        sTimerProxy.startLongPressTimerOf(this, Settings.getValues().mKeyLongpressTimeout);
+    }
+
+    /** Appui long, 2e temps : retour aux lettres et panneau des lettres spéciales de la lettre d'origine. */
+    private void showFleksyAccents() {
+        final Key source = mFleksyLongPressKey;
+        mFleksyLongPressStage = 0;
+        mFleksyLongPressKey = null;
+        if (source == null) return;
+        setReleasedKeyGraphics(mCurrentKey, false);
+        sListener.onCodeInput(KeyCode.ALPHA, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false);
+        keyboardChangeOccupiedHeightDifference = 0;
+        Key key = mKeyDetector.detectHitKey(source.getX() + source.getWidth() / 2, source.getY() + source.getHeight() / 2);
+        if (key == null || key.getCode() != source.getCode() || key.getPopupKeys() == null) key = source;
+        mCurrentKey = key;
+        final PopupKeysPanel panel = sDrawingProxy.showPopupKeysKeyboard(key, this);
+        if (panel == null) return;
+        panel.onDownEvent(clampToPopupX(panel, panel.translateX(mLastX)), clampToPopupY(panel, panel.translateY(mLastY)),
+                mPointerId, SystemClock.uptimeMillis());
+        mPopupKeysPanel = panel;
+        mPopupSourceKey = key;
+        sListener.onCustomRequest(KeyboardActionListener.CustomAction.PERFORM_HAPTIC);
+    }
+
+    /** Fin de l'appui long en symboles (doigt levé ou annulé) : retour au clavier des lettres. */
+    private void endFleksySymbols() {
+        if (mFleksyLongPressStage == 0) return;
+        mFleksyLongPressStage = 0;
+        mFleksyLongPressKey = null;
+        sListener.onCodeInput(KeyCode.ALPHA, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false);
     }
 
     /** Barre des emojis : glisser vers le haut depuis ABC revient aux lettres. */
@@ -1308,6 +1369,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
             }
         }
         onUpEventInternal(x, y, eventTime);
+        endFleksySymbols(); // le symbole a été tapé : on revient aux lettres
         sPointerTrackerQueue.remove(this);
     }
 
@@ -1320,6 +1382,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
             printTouchEvent("onPhntEvent:", mLastX, mLastY, eventTime);
         }
         onUpEventInternal(mLastX, mLastY, eventTime);
+        endFleksySymbols();
         cancelTrackingForAction();
     }
 
@@ -1417,7 +1480,23 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
     public void onLongPressed() {
         sTimerProxy.cancelLongPressTimersOf(this);
         if (mFleksyDirection != 0) return; // un geste Fleksy est en cours : pas d'appui long
+        final boolean wasFleksyEligible = mFleksyEligible;
         mFleksyEligible = false;
+        // 2e temps : doigt immobile depuis l'apparition des symboles -> lettres spéciales de la lettre d'origine
+        if (mFleksyLongPressStage == 1 && !isShowingPopupKeysPanel()
+                && abs(mLastX - mFleksyStageX) < sFleksyStillSlop && abs(mLastY - mFleksyStageY) < sFleksyStillSlop
+                && mFleksyLongPressKey != null && mFleksyLongPressKey.getPopupKeys() != null) {
+            showFleksyAccents();
+            return;
+        }
+        // 1er temps : appui long sur une lettre -> tout le clavier passe en symboles
+        if (mFleksyLongPressStage == 0 && wasFleksyEligible && !isShowingPopupKeysPanel()) {
+            final Key letter = getKey();
+            if (letter != null && mKeyboard != null && mKeyboard.mId.getElement().isAlphabet()) {
+                startFleksySymbols(letter);
+                return;
+            }
+        }
         if (isShowingPopupKeysPanel()) {
             return;
         }
@@ -1485,6 +1564,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
     }
 
     private void onCancelEventInternal() {
+        endFleksySymbols();
         mShiftSwipeCandidate = false;
         mDeleteSwipeCandidate = false;
         mEmojiExitSwipeCandidate = false;

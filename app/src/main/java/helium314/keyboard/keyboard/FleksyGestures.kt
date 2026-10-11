@@ -30,6 +30,8 @@ class FleksyGestures(
     private val haptic: () -> Unit,
     /** recharge le clavier après un changement de disposition */
     private val reloadKeyboard: () -> Unit,
+    /** met à jour la majuscule automatique (après un point inséré directement) */
+    private val updateShiftState: () -> Unit,
     private val context: Context,
 ) {
     private val connection get() = inputLogic.mConnection
@@ -51,7 +53,7 @@ class FleksyGestures(
 
     fun onSwipe(direction: Int) {
         when (direction) {
-            KeyboardActionListener.FLEKSY_SWIPE_RIGHT -> sendCode(Constants.CODE_SPACE)
+            KeyboardActionListener.FLEKSY_SWIPE_RIGHT -> if (!replaceSpaceWithPeriod()) sendCode(Constants.CODE_SPACE)
             KeyboardActionListener.FLEKSY_SWIPE_LEFT -> deleteWord()
             KeyboardActionListener.FLEKSY_SWIPE_DOWN -> cycleSuggestion(+1)
             KeyboardActionListener.FLEKSY_SWIPE_UP -> cycleSuggestion(-1)
@@ -66,6 +68,21 @@ class FleksyGestures(
         setSpaceRowHidden(context, hide)
         haptic()
         reloadKeyboard()
+    }
+
+    /** 2e glissement à droite après un mot : « mot␣ » devient « mot.␣ » (quel que soit le délai). */
+    private fun replaceSpaceWithPeriod(): Boolean {
+        if (connection.hasSelection() || inputLogic.isComposingWordForFleksy) return false
+        val before = connection.getTextBeforeCursor(2, 0)?.toString() ?: return false
+        if (before.length != 2 || before[1] != ' ' || !before[0].isLetterOrDigit()) return false
+        resetCycle()
+        inputLogic.finishInput()
+        connection.beginBatchEdit()
+        connection.deleteTextBeforeCursor(1)
+        connection.commitText(". ", 1)
+        connection.endBatchEdit()
+        updateShiftState()
+        return true
     }
 
     // ------------------------------------------------------------------
@@ -96,7 +113,7 @@ class FleksyGestures(
         candidates = list
         candidateIndex = list.indexOf(committed)
         insertedText = "$committed "
-        publishDisplay(visible = false) // la barre ne s'affiche qu'au glissement haut/bas
+        publishDisplay() // visible dans la ligne d'aperçu (gauche : haut, droite : bas)
     }
 
     class PendingCommit(val typed: String, val candidates: List<String>)

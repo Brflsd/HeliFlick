@@ -237,6 +237,7 @@ public final class KeyboardSwitcher {
         final int visibility = isImeSuppressedByHardwareKeyboard(settingsValues, toggleState) ? View.GONE : View.VISIBLE;
         final int stripVisibility = mLatinIME.hasSuggestionStripView()? View.VISIBLE : View.GONE;
         mStripContainer.setVisibility(stripVisibility);
+        setFleksyPreviewLineVisibility(stripVisibility);
         PointerTracker.switchTo(mKeyboardView);
         mKeyboardView.setVisibility(visibility);
         // The visibility of {@link #mKeyboardView} must be aligned with {@link #MainKeyboardFrame}.
@@ -323,6 +324,13 @@ public final class KeyboardSwitcher {
                     mState.setLayout(LayoutDirective.Utility.SYMBOLS_SHIFTED);
             }
         }
+    }
+
+    // HeliFlick : ligne d'aperçu des mots
+    private android.widget.LinearLayout mFleksyPreviewLine;
+
+    private void setFleksyPreviewLineVisibility(final int visibility) {
+        if (mFleksyPreviewLine != null) mFleksyPreviewLine.setVisibility(visibility);
     }
 
     public void updateShiftState(final int autoCapsFlags, @Nullable final RecapitalizeMode recapitalizeMode) {
@@ -567,6 +575,9 @@ public final class KeyboardSwitcher {
         mClipboardStripScrollView = mCurrentInputView.findViewById(R.id.clipboard_strip_scroll_view);
         mSuggestionStripView = mCurrentInputView.findViewById(R.id.suggestion_strip_view);
         mStripContainer = mCurrentInputView.findViewById(R.id.strip_container);
+        mFleksyPreviewLine = mCurrentInputView.findViewById(R.id.fleksy_preview_line);
+        if (mFleksyPreviewLine != null)
+            helium314.keyboard.latin.suggestions.FleksyPreviewLine.INSTANCE.attach(mFleksyPreviewLine);
         // Fleksy : hauteur réglable de la barre d'outils / des suggestions
         if (mStripContainer != null && mStripContainer.getLayoutParams() != null) {
             final float stripScale = helium314.keyboard.latin.suggestions.FleksyToolbarSizes.heightScale(mLatinIME);
@@ -662,6 +673,7 @@ public final class KeyboardSwitcher {
             mStripContainer.setVisibility(getSecondaryStripVisibility());
             mClipboardStripScrollView.setVisibility(View.GONE);
             mEmojiTabStripView.setVisibility(View.VISIBLE);
+            setFleksyPreviewLineVisibility(View.GONE);
             mClipboardHistoryView.setVisibility(View.GONE);
             mEmojiPalettesView.startEmojiPalettes(mKeyboardView.getKeyVisualAttribute(),
                 mLatinIME.getCurrentInputEditorInfo(), mLatinIME.mKeyboardActionListener);
@@ -683,6 +695,7 @@ public final class KeyboardSwitcher {
             mStripContainer.setVisibility(getSecondaryStripVisibility());
             mClipboardStripScrollView.post(() -> mClipboardStripScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT));
             mClipboardStripScrollView.setVisibility(View.VISIBLE);
+            setFleksyPreviewLineVisibility(View.GONE);
             mEmojiPalettesView.setVisibility(View.GONE);
             mClipboardHistoryView.startClipboardHistory(mLatinIME.getClipboardHistoryManager(), mKeyboardView.getKeyVisualAttribute(),
                 mLatinIME.getCurrentInputEditorInfo(), mLatinIME.mKeyboardActionListener);

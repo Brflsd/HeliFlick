@@ -22,6 +22,37 @@ object FleksyToolbarSizes {
     fun setHeightScale(context: Context, scale: Float) = save(context, PREF_HEIGHT_SCALE, scale)
     fun setTextScale(context: Context, scale: Float) = save(context, PREF_TEXT_SCALE, scale)
 
+    // --- ligne d'aperçu des mots ---
+    const val PREF_PREVIEW_HEIGHT = "fleksy_preview_line_height_dp"
+    const val PREVIEW_HEIGHT_DEFAULT = 16
+    const val PREVIEW_HEIGHT_MAX = 36
+
+    /** hauteur de la ligne d'aperçu en dp (0 : masquée) */
+    @JvmStatic
+    fun previewHeight(context: Context) = context.prefs().getInt(PREF_PREVIEW_HEIGHT, PREVIEW_HEIGHT_DEFAULT).coerceIn(0, PREVIEW_HEIGHT_MAX)
+
+    fun setPreviewHeight(context: Context, dp: Int) {
+        context.prefs().edit { putInt(PREF_PREVIEW_HEIGHT, dp.coerceIn(0, PREVIEW_HEIGHT_MAX)) }
+        runCatching { KeyboardSwitcher.getInstance().setThemeNeedsReload() }
+    }
+
+    // --- appui long : délai avant les lettres spéciales (le délai avant les symboles est celui de HeliBoard) ---
+    const val PREF_ACCENT_DELAY = "fleksy_accent_delay_ms"
+    const val ACCENT_DELAY_DEFAULT = 500
+
+    /** valeur mémorisée pour le code du clavier, qui n'a pas de Context sous la main */
+    @JvmStatic
+    var accentDelayMs = ACCENT_DELAY_DEFAULT
+        private set
+
+    fun accentDelay(context: Context) = context.prefs().getInt(PREF_ACCENT_DELAY, ACCENT_DELAY_DEFAULT).coerceIn(150, 2000)
+        .also { accentDelayMs = it }
+
+    fun setAccentDelay(context: Context, ms: Int) {
+        context.prefs().edit { putInt(PREF_ACCENT_DELAY, ms.coerceIn(150, 2000)) }
+        accentDelayMs = ms.coerceIn(150, 2000)
+    }
+
     private fun save(context: Context, key: String, scale: Float) {
         context.prefs().edit { putFloat(key, scale.coerceIn(MIN_SCALE, MAX_SCALE)) }
         // la vue du clavier est recréée à la prochaine ouverture avec les nouvelles tailles

@@ -330,7 +330,8 @@ public final class KeyboardSwitcher {
     private android.widget.LinearLayout mFleksyPreviewLine;
 
     private void setFleksyPreviewLineVisibility(final int visibility) {
-        if (mFleksyPreviewLine != null) mFleksyPreviewLine.setVisibility(visibility);
+        if (mFleksyPreviewLine != null) mFleksyPreviewLine.setVisibility(
+                helium314.keyboard.latin.suggestions.FleksyPreviewLine.isHidden() ? View.GONE : visibility);
     }
 
     public void updateShiftState(final int autoCapsFlags, @Nullable final RecapitalizeMode recapitalizeMode) {

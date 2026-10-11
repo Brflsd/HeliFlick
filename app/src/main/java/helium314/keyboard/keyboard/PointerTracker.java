@@ -834,8 +834,9 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         mStartY = y;
         final Key symbol = onMoveKey(x, y);
         if (symbol != null) processDraggingFingerInToNewKey(symbol, x, y, SystemClock.uptimeMillis());
-        // délai avant les lettres spéciales (même délai que l'appui long)
-        sTimerProxy.startLongPressTimerOf(this, Settings.getValues().mKeyLongpressTimeout);
+        // délai avant les lettres spéciales (réglable dans « Barre d'outils et appui long »)
+        sTimerProxy.cancelLongPressTimersOf(this); // remplace le minuteur lancé pour la touche symbole
+        sTimerProxy.startLongPressTimerOf(this, helium314.keyboard.latin.suggestions.FleksyToolbarSizes.getAccentDelayMs());
     }
 
     /** Appui long, 2e temps : retour aux lettres et panneau des lettres spéciales de la lettre d'origine. */

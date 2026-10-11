@@ -25,19 +25,31 @@ object FleksyPreviewLine {
     private var center: TextView? = null
     private var right: TextView? = null
 
+    /** true si l'utilisateur a masqué la ligne (hauteur 0) */
+    @JvmStatic
+    var isHidden = false
+        private set
+
     fun attach(container: LinearLayout) {
         container.removeAllViews()
+        FleksyToolbarSizes.accentDelay(container.context) // met à jour le délai mémorisé
+        val heightDp = FleksyToolbarSizes.previewHeight(container.context)
+        isHidden = heightDp == 0
         val colors = Settings.getValues().mColors
         colors.setBackground(container, ColorType.STRIP_BACKGROUND)
         container.isClickable = false
         container.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        val scale = FleksyToolbarSizes.textScale(container.context)
+        val density = container.resources.displayMetrics.density
+        // texte proportionnel à la hauteur choisie, sans marge interne
+        val textPx = heightDp * density * 0.68f
         val sideColor = ColorUtils.setAlphaComponent(colors.get(ColorType.KEY_TEXT), 150)
         fun slot(color: Int, bold: Boolean) = TextView(container.context).apply {
             gravity = Gravity.CENTER
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f * scale)
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, textPx)
+            includeFontPadding = false
+            setPadding(0, 0, 0, 0)
             setTextColor(color)
             if (bold) setTypeface(typeface, Typeface.BOLD)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
@@ -47,7 +59,7 @@ object FleksyPreviewLine {
         center = slot(colors.get(ColorType.KEY_TEXT), true)
         right = slot(sideColor, false)
         container.layoutParams?.let {
-            it.height = (container.resources.displayMetrics.density * 22 * scale).toInt()
+            it.height = (density * heightDp).toInt()
             container.layoutParams = it
         }
         // l'état de correction (après un espace ou un glissement haut/bas) a priorité sur l'aperçu de frappe

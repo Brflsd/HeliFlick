@@ -64,14 +64,14 @@ object Defaults {
     @JvmField
     var PREF_POPUP_ON = true
     const val PREF_AUTO_CORRECTION = true
-    const val PREF_MORE_AUTO_CORRECTION = false
+    const val PREF_MORE_AUTO_CORRECTION = true // HeliFlick : corrige partout, comme Fleksy (sauf mots de passe, e-mails, adresses web)
     const val PREF_AUTO_CORRECT_CONFIDENCE = 0.24f
     const val PREF_AUTOCORRECT_SHORTCUTS = true
     const val PREF_BACKSPACE_REVERTS_AUTOCORRECT = true
     const val PREF_AUTOCORRECT_CAPITALIZED_SUGGESTION = true
     const val PREF_CENTER_SUGGESTION_TEXT_TO_ENTER = false
     const val PREF_SHOW_SUGGESTIONS = true
-    const val PREF_ALWAYS_SHOW_SUGGESTIONS = false
+    const val PREF_ALWAYS_SHOW_SUGGESTIONS = true // HeliFlick : suggestions même si l'app les refuse (barres de recherche…)
     const val PREF_ALWAYS_SHOW_SUGGESTIONS_EXCEPT_WEB_TEXT = true
     const val PREF_KEY_USE_PERSONALIZED_DICTS = true
     const val PREF_KEY_USE_DOUBLE_SPACE_PERIOD = true

@@ -61,6 +61,7 @@ fun FleksyToolbarScreen(onClickBack: () -> Unit) {
         topBar = { TopAppBar(title = { Text("Barre d'outils et appui long") }, navigationIcon = { BackButton(onClickBack) }) }
     ) { innerPadding ->
         Column(Modifier.padding(innerPadding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+            KeyboardTestField()
             // aperçu : la barre des chiffres
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(barColor).height((40 * height).dp),

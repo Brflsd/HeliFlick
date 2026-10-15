@@ -66,6 +66,7 @@ fun FleksyColorsScreen(onClickBack: () -> Unit) {
         Column(
             Modifier.padding(innerPadding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
         ) {
+            KeyboardTestField()
             // --- aperçu ---
             val b = base
             if (b != null) {

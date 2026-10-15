@@ -329,6 +329,11 @@ public final class KeyboardSwitcher {
     // HeliFlick : ligne d'aperçu des mots
     private android.widget.LinearLayout mFleksyPreviewLine;
 
+    /** hauteur occupée par la ligne d'aperçu (à compter dans la hauteur du clavier annoncée aux applications) */
+    public int getFleksyPreviewLineHeight() {
+        return mFleksyPreviewLine != null && mFleksyPreviewLine.getVisibility() == View.VISIBLE ? mFleksyPreviewLine.getHeight() : 0;
+    }
+
     private void setFleksyPreviewLineVisibility(final int visibility) {
         if (mFleksyPreviewLine != null) mFleksyPreviewLine.setVisibility(
                 helium314.keyboard.latin.suggestions.FleksyPreviewLine.isHidden() ? View.GONE : visibility);

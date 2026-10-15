@@ -1216,7 +1216,9 @@ public class LatinIME extends InputMethodService implements
             mInsetsUpdater.setInsets(outInsets);
             return;
         }
-        final int stripHeight = mKeyboardSwitcher.isShowingStripContainer() ? mKeyboardSwitcher.getStripContainer().getHeight() : 0;
+        // HeliFlick : la ligne d'aperçu fait partie du clavier (sinon le clavier recouvre le champ de texte)
+        final int stripHeight = (mKeyboardSwitcher.isShowingStripContainer() ? mKeyboardSwitcher.getStripContainer().getHeight() : 0)
+                + mKeyboardSwitcher.getFleksyPreviewLineHeight();
         int visibleTopY = inputHeight - visibleKeyboardView.getHeight() - stripHeight;
         if (Settings.getValues().mIsFloatingKeyboard)
             visibleTopY = getResources().getDisplayMetrics().heightPixels;
